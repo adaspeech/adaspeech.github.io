@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="generator" content="Hugo 0.66.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,700" rel="stylesheet" type="text/css">
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/github.min.css">
+<link rel="stylesheet" href="../css/normalize.css">
+<link rel="stylesheet" href="../css/skeleton.css">
+<link rel="stylesheet" href="../css/custom.css">
+<link rel="alternate" href="index.xml" type="application/rss+xml" title="SpeechResearch">
+<link rel="shortcut icon" href="favicon.png" type="image/x-icon" />
+<title>Adaspeech: Adaptive Text to Speech for Custom Voice - SpeechResearch</title>
+</head>
+<body>
+
+<div class="container">
+
+	<header role="banner">
+		
+			
+		
+		
+	</header>
+
+
+	<main role="main">
+		<article itemscope itemtype="https://schema.org/BlogPosting">
+            <h1 class="entry-title" itemprop="headline">Adaspeech: Adaptive Text to Speech for Custom Voice</h1>
+			
+			<section itemprop="entry-text">
+				<!--
+## Authors
+
+- Mingjian Chen (Perking University) <milk@pku.edu.cn>
+- Xu Tan (Microsoft Research) <xuta@microsoft.com>
+- Yi Ren (Zhejiang University) <rayeren@zju.edu.cn>
+- Jin Xu (Tsinghua University) <j-xu18@mails.tsinghua.edu.cn>
+- Hao Sun (Perking University) <sigmeta@pku.edu.cn>
+- Sheng Zhao (Microsoft STC Asia) <Sheng.Zhao@microsoft.com>
+- Tao Qin (Microsoft Research) <taoqin@microsoft.com>
+-->
+<!-- ## Abstract
+
+Speech synthesis (text to speech, TTS) and recognition (automatic speech recognition, ASR) are important speech tasks, and require a large amount of text and speech pairs for model training. However, there are more than 6,000 languages in the world and most languages are lack of speech training data, which poses significant challenges when building TTS and ASR systems for extremely low-resource languages. In this paper, we develop LRSpeech, a TTS and ASR system under the extremely low-resource setting, which can support rare languages with low data cost. LRSpeech consists of three key techniques: 1) pre-training on rich-resource languages and fine-tuning on low-resource languages; 2) dual transformation between TTS and ASR to iteratively boost the accuracy of each other; 3) knowledge distillation to customize the TTS model on a high-quality target-speaker voice and improve the ASR model on multiple voices. We conduct experiments on an experimental language (English) and a truly low-resource language (Lithuanian) to verify the effectiveness of LRSpeech. Experimental results show that LRSpeech 1) achieves high quality for TTS in terms of both intelligibility (more than $98\%$ intelligibility rate) and naturalness (above 3.5 mean opinion score (MOS)) of the synthesized speech, which satisfy the requirements for industrial deployment, 2) achieves promising recognition accuracy for ASR, and 3) last but not least, uses extremely low-resource training data. We also conduct comprehensive analyses on LRSpeech with different amounts of data resources, and provide valuable insights and guidances for industrial deployment. We are currently deploying LRSpeech into a commercialized cloud speech service to support TTS on more rare languages.  -->
+<h2 id="abstract">Contents</h2>
+<b><a href="#audio-samples">Audio Samples</a></b><br>
+<a href="#1.1">1.1 Adaptation voice on LibriTTS, VCTK and LJSpeech</a><br>
+<b><a href="#ablation-studies">Ablation Studies</a></b><br>
+<a href="#2.1">2.1 Audios of Ablation Study on VCTK</a><br>
+<a href="#2.2">2.2 Audios of Utterance-level Visualization Analysis</a><br>
+<a href="#2.3">2.3 Audios of Finetune CLN and Finetune Other Decoder Parameters</a><br>
+<a href="#2.4">2.4 Audios of Varying Adaptation Data on AdaSpeech</a><br>
+<p><span id="audio-samples" name="audio-samples"></span></p>
+<h2 id="audio-samples">Audio Samples</h2>
+<p><span id="1.1" name="1.1"></span></p>
+<h3 id="adaptation-voice-on-libritts-vctk-and-ljspeech">Adaptation voice on LibriTTS, VCTK and LJSpeech</h3>
+<img src="../images/adaspeech/table1.png" width="50%"/>
+<p><em>Libritts speaker : And so, howsoever reluctantly, she had gone.</em></p>
+<table><thead>
+<tr>
+<th style="text-align: center">GT</th>
+<th style="text-align: center">GT mel + MelGAN</th>
+<th style="text-align: center">Baseline (Spk Emb)</th>
+<th style="text-align: center">Baseline (Decoder)</th>
+<th style="text-align: center">AdaSpeech</th>
+</tr></thead><tbody>
+<tr>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/1 base/libritts/gt/0000000001.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/1 base/libritts/gt mel vocoder/0000000001.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/1 base/libritts/baseline(spk emb)/0000000001.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/1 base/libritts/baseline(decoder)/0000000001.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/1 base/libritts/adaspeech/0000000001.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+</tr>
+</tbody></table>
+<p><em>VCTK speaker : Six spoons of fresh snow peas, five thick slabs of blue cheese, and maybe a snack for her brother Bob.</em></p>
+<table><thead>
+<tr>
+<th style="text-align: center">GT</th>
+<th style="text-align: center">GT mel + MelGAN</th>
+<th style="text-align: center">Baseline (Spk Emb)</th>
+<th style="text-align: center">Baseline (Decoder)</th>
+<th style="text-align: center">AdaSpeech</th>
+</tr></thead><tbody>
+<tr>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/1 base/vctk/gt/0000000003.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/1 base/vctk/gt mel vocoder/0000000003.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/1 base/vctk/baseline(spk emb)/0000000003.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/1 base/vctk/baseline(decoder)/0000000003.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/1 base/vctk/adaspeech/0000000003.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+</tr>
+</tbody></table>
+<p><em>LJSpeech speaker : Especially as no more time is occupied or cost incurred in casting setting or printing beautiful letters.</em></p>
+<table><thead>
+<tr>
+<th style="text-align: center">GT</th>
+<th style="text-align: center">GT mel + MelGAN</th>
+<th style="text-align: center">Baseline (Spk Emb)</th>
+<th style="text-align: center">Baseline (Decoder)</th>
+<th style="text-align: center">AdaSpeech</th>
+</tr></thead><tbody>
+<tr>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/1 base/lj/gt/0000000012.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/1 base/lj/gt mel vocoder/0000000012.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/1 base/lj/baseline(spk emb)/0000000012.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/1 base/lj/baseline(decoder)/0000000012.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/1 base/lj/adaspeech/0000000012.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+</tr>
+</tbody></table>
+<p><span id="audio-studies" name="audio-studies"></span></p>
+<h2 id="ablation-studies">Ablation Studies</h2>
+<p><span id="2.1" name="2.1"></span></p>
+<h3 id="audios-of-ablation-study-on-vctk">Audios of Ablation Study on VCTK</h3>
+<img src="../images/adaspeech/table2.png" width="30%"/>
+<p><em>VCTK speaker : There is , according to legend, a boiling pot of gold at one end.</em></p>
+<table><thead>
+<tr>
+<th style="text-align: center">AdaSpeech</th>
+<th style="text-align: center">AdaSpeech w/o CLN</th>
+<th style="text-align: center">AdaSpeech w/o PL-ACM</th>
+<th style="text-align: center">AdaSpeech w/o UL-ACM</th>
+</tr></thead><tbody>
+<tr>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/2 ablation/adaspeech/0000000009.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/2 ablation/adaspeech - cln/0000000009.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/2 ablation/adaspeech - pl-acm/0000000009.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/2 ablation/adaspeech - ul-acm/0000000009.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+</tr>
+</tbody></table>
+<p><span id="2.2" name="2.2"></span></p>
+<h3 id="audios-of-utterance-level-visualization-analysis">Audios of Utterance-level Visualization Analysis</h3>
+<img src="../images/adaspeech/emb2_20.png" width="50%"/>
+<p>Pink Point in Brown Circle</p>
+<table><thead>
+<th style="text-align: center">You little scamp!</th>
+<th style="text-align: center">Well! why do you not enter?</th>
+</thead><tbody>
+<tr>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/3 pl analyse/6709/99.wav" autoplay/
+>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/3 pl analyse/6709/98.wav" autoplay/
+>Your browser does not support the audio element.</audio></td>
+</tr>
+</tbody></table>
+<p>Blue Point in Brown Circle</p>
+<table><thead>
+<th style="text-align: center">The Fairy.</th>
+</thead><tbody>
+<tr>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/3 pl analyse/6449/76.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+</tr>
+</tbody></table>
+<p><span id="2.3" name="2.3"></span></p>
+<h3 id="audios-of-finetune-cln-and-finetune-other-decoder-parameters">Audios of Finetune CLN and Finetune Other Decoder Parameters</h3>
+<img src="../images/adaspeech/table3.png" width="30%"/>
+<p><em>VCTK speaker : Ask her to bring these things with her from the store.</em></p>
+<table><thead>
+<tr>
+<th style="text-align: center">Finetune CLN</th>
+<th style="text-align: center">Finetune Other Decoder Parameters</th>
+</tr></thead><tbody>
+<tr>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/4 cln - other parameters/cln/0000000002.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/4 cln - other parameters/other/0000000002.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+</tr>
+</tbody></table>
+<p><span id="2.4" name="2.4"></span></p>
+<h3 id="audios-of-varying-adaptation-data-on-adaspeech">Audios of Varying Adaptation Data on AdaSpeech</h3>
+<p><em>LJSpeech speaker : especially as no more time is occupied or cost incurred in casting setting or printing beautiful letters.</em></p>
+<table><thead>
+<tr>
+<th style="text-align: center">1 Adaptation Sample</th>
+<th style="text-align: center">2 Adaptation Samples</th>
+<th style="text-align: center">5 Adaptation Samples</th>
+<th style="text-align: center">10 Adaptation Samples</th>
+<th style="text-align: center">20 Adaptation Samples</th>
+</tr></thead><tbody>
+<tr>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/5 varying adaptation data/1251020-lj/aelj1/0000000012.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/5 varying adaptation data/1251020-lj/aelj2/0000000012.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/5 varying adaptation data/1251020-lj/aelj5/0000000012.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/5 varying adaptation data/1251020-lj/aelj10/0000000012.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/5 varying adaptation data/1251020-lj/ae/0000000012.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+</tr>
+</tbody></table>
+<p><em>VCTK speaker : Six spoons of fresh snow peas, five thick slabs of blue cheese, and maybe a snack for her brother Bob.</em></p>
+<table><thead>
+<tr>
+<th style="text-align: center">1 Adaptation Sample</th>
+<th style="text-align: center">2 Adaptation Samples</th>
+<th style="text-align: center">5 Adaptation Samples</th>
+<th style="text-align: center">10 Adaptation Samples</th>
+<th style="text-align: center">20 Adaptation Samples</th>
+</tr></thead><tbody>
+<tr>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/5 varying adaptation data/1251020-vctk/ae1/0000000003.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/5 varying adaptation data/1251020-vctk/ae2/0000000003.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/5 varying adaptation data/1251020-vctk/ae5/0000000003.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/5 varying adaptation data/1251020-vctk/ae10/0000000003.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+<td style="text-align: center"><audio controls="controls" ><source src="../audio/adaspeech/5 varying adaptation data/1251020-vctk/ae20/0000000003.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+</tr>
+</tbody></table>
+			</section>
+		</article>
+	</main>
+
+
+	
+
+</div>
+
+<script>
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-139981676-1', 'auto');
+	ga('send', 'pageview');
+</script>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+
+<script type="text/x-mathjax-config">
+     MathJax.Hub.Config({
+         HTML: ["input/TeX","output/HTML-CSS"],
+         TeX: {
+                Macros: {
+                         bm: ["\\boldsymbol{#1}", 1],
+                         argmax: ["\\mathop{\\rm arg\\,max}\\limits"],
+                         argmin: ["\\mathop{\\rm arg\\,min}\\limits"]},
+                extensions: ["AMSmath.js","AMSsymbols.js"],
+                equationNumbers: { autoNumber: "AMS" } },
+         extensions: ["tex2jax.js"],
+         jax: ["input/TeX","output/HTML-CSS"],
+         tex2jax: { inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+                    displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+                    processEscapes: true },
+         "HTML-CSS": { availableFonts: ["TeX"],
+                       linebreaks: { automatic: true } }
+     });
+ </script>
+
+ <script type="text/x-mathjax-config">
+     MathJax.Hub.Config({
+       tex2jax: {
+         skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+       }
+     });
+ </script>
+
+ <script type="text/javascript" async
+   src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML">
+ </script>
+
+
+
+
+</body>
+</html>
